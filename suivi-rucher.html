@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Suivi Rucher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#171208;
+    --hive-black:#1B140C;
+    --panel:#241B10;
+    --panel-2:#2E2213;
+    --honey:#E3A63E;
+    --honey-bright:#F4C458;
+    --honey-deep:#B9791F;
+    --cream:#F6EEDD;
+    --cream-dim:#C9BCA0;
+    --line:#3B2E1B;
+    --sage:#8A9A66;
+    --rust:#C4572E;
+    --radius-card: 14px;
+    --radius-pill: 999px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--hive-black);
+    color:var(--cream);
+    font-family:'Karla', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+  }
+  #app{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    background:
+      radial-gradient(1200px 300px at 50% -80px, rgba(227,166,62,0.14), transparent 60%),
+      var(--hive-black);
+  }
+  h1,h2,h3{
+    font-family:'Fraunces', Georgia, serif;
+    margin:0;
+    font-weight:600;
+    color:var(--cream);
+  }
+  /* HEADER */
+  header.topbar{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:22px 20px 16px;
+    border-bottom:1px solid var(--line);
+  }
+  .logo-mark{ width:42px; height:42px; flex:none; }
+  .brandblock h1{ font-size:1.32rem; letter-spacing:0.01em; }
+  .brandblock .tagline{ font-size:0.72rem; color:var(--cream-dim); margin-top:2px; }
+
+  main{ flex:1; padding:18px 18px 100px; overflow-y:auto; }
+  .view{ display:none; animation:fade .25s ease; }
+  .view.active{ display:block; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+  .section-title{
+    font-size:1.05rem;
+    margin:22px 0 10px;
+    color:var(--honey-bright);
+  }
+  .section-title:first-child{ margin-top:0; }
+
+  /* STAT GRID */
+  .stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .stat-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius-card);
+    padding:14px 14px 12px;
+  }
+  .stat-card .num{ font-family:'Fraunces',serif; font-size:1.9rem; color:var(--honey-bright); line-height:1; }
+  .stat-card .label{ font-size:0.76rem; color:var(--cream-dim); margin-top:6px; }
+
+  .hero-card{
+    background:linear-gradient(155deg, var(--panel-2), var(--panel) 70%);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:20px;
+    margin-bottom:6px;
+  }
+  .hero-card .hero-num{ font-family:'Fraunces',serif; font-size:2.6rem; color:var(--honey-bright); }
+  .hero-card .hero-label{ color:var(--cream-dim); font-size:0.85rem; margin-top:2px; }
+  .hero-card .hero-sub{ margin-top:14px; display:flex; gap:18px; }
+  .hero-card .hero-sub div{ font-size:0.78rem; color:var(--cream-dim); }
+  .hero-card .hero-sub strong{ color:var(--cream); font-family:'Fraunces',serif; font-size:1.05rem; display:block; }
+
+  /* ALERT LIST */
+  .alert-item{
+    display:flex; align-items:flex-start; gap:10px;
+    background:var(--panel); border:1px solid var(--line);
+    border-left:3px solid var(--rust);
+    border-radius:10px; padding:11px 13px; margin-bottom:8px;
+  }
+  .alert-item.ok{ border-left-color: var(--sage); }
+  .alert-item .dot{ font-size:1.1rem; line-height:1.1; }
+  .alert-item .txt{ font-size:0.85rem; }
+  .alert-item .txt .meta{ color:var(--cream-dim); font-size:0.74rem; margin-top:2px; }
+
+  /* CARD LIST (ruchers, ruches, etc.) */
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius-card);
+    padding:14px 15px;
+    margin-bottom:10px;
+  }
+  .card-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .card-title{ font-family:'Fraunces',serif; font-size:1.05rem; color:var(--cream); }
+  .card-sub{ font-size:0.78rem; color:var(--cream-dim); margin-top:3px; }
+  .badge{
+    font-size:0.68rem; padding:3px 9px; border-radius:var(--radius-pill);
+    background:rgba(227,166,62,0.15); color:var(--honey-bright);
+    border:1px solid rgba(227,166,62,0.35); white-space:nowrap;
+  }
+  .badge.sage{ background:rgba(138,154,102,0.15); color:#B7C79A; border-color:rgba(138,154,102,0.35); }
+  .badge.rust{ background:rgba(196,87,46,0.15); color:#E39274; border-color:rgba(196,87,46,0.35); }
+  .card-meta-row{ display:flex; gap:14px; margin-top:10px; flex-wrap:wrap; }
+  .card-meta-row .m{ font-size:0.76rem; color:var(--cream-dim); }
+  .card-meta-row .m b{ color:var(--cream); font-weight:600; }
+  .card-actions{ display:flex; gap:8px; margin-top:12px; }
+
+  /* BUTTONS */
+  .btn{
+    font-family:'Karla',sans-serif;
+    font-size:0.84rem; font-weight:600;
+    border-radius:10px; border:1px solid transparent;
+    padding:10px 14px; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .btn-primary{ background:var(--honey); color:#241A0A; }
+  .btn-primary:active{ background:var(--honey-deep); }
+  .btn-ghost{ background:transparent; border-color:var(--line); color:var(--cream); }
+  .btn-ghost:active{ background:var(--panel-2); }
+  .btn-sm{ padding:7px 11px; font-size:0.76rem; }
+  .btn-block{ width:100%; }
+  .fab{
+    position:fixed; right:calc(50% - 240px + 20px); bottom:92px;
+    width:54px; height:54px; border-radius:50%;
+    background:var(--honey); color:#241A0A; border:none;
+    font-size:1.6rem; box-shadow:0 6px 18px rgba(0,0,0,0.45);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; z-index:20;
+  }
+  @media (max-width:520px){ .fab{ right:20px; } }
+
+  /* EMPTY STATE */
+  .empty{ text-align:center; padding:40px 10px; color:var(--cream-dim); }
+  .empty .big-emoji{ font-size:2rem; margin-bottom:8px; }
+  .empty p{ font-size:0.85rem; margin:4px 0 16px; }
+
+  /* BOTTOM NAV */
+  nav.tabbar{
+    position:fixed; bottom:0; left:0; right:0;
+    display:flex; justify-content:center;
+    background:rgba(27,20,12,0.96);
+    backdrop-filter:blur(6px);
+    border-top:1px solid var(--line);
+    z-index:30;
+  }
+  nav.tabbar .tabbar-inner{
+    width:100%; max-width:480px; display:flex;
+  }
+  .tab{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:10px 2px 12px; background:none; border:none; cursor:pointer;
+    color:var(--cream-dim); font-family:'Karla',sans-serif; font-size:0.65rem;
+  }
+  .tab .ic{ font-size:1.2rem; opacity:0.75; }
+  .tab.active{ color:var(--honey-bright); }
+  .tab.active .ic{ opacity:1; }
+
+  /* MODAL / SHEET */
+  .sheet-backdrop{
+    position:fixed; inset:0; background:rgba(10,7,3,0.6);
+    display:none; align-items:flex-end; justify-content:center; z-index:50;
+  }
+  .sheet-backdrop.open{ display:flex; }
+  .sheet{
+    width:100%; max-width:480px; max-height:88vh; overflow-y:auto;
+    background:var(--panel); border-radius:20px 20px 0 0;
+    padding:20px 20px 28px; border-top:1px solid var(--line);
+    animation:slideup .22s ease;
+  }
+  @keyframes slideup{ from{ transform:translateY(30px); opacity:0;} to{ transform:none; opacity:1;} }
+  .sheet h2{ font-size:1.15rem; margin-bottom:14px; }
+  .field{ margin-bottom:13px; }
+  .field label{ display:block; font-size:0.76rem; color:var(--cream-dim); margin-bottom:5px; }
+  .field input, .field select, .field textarea{
+    width:100%; background:var(--hive-black); border:1px solid var(--line);
+    border-radius:9px; padding:10px 11px; color:var(--cream);
+    font-family:'Karla',sans-serif; font-size:0.9rem;
+  }
+  .field textarea{ resize:vertical; min-height:60px; }
+  .field input:focus, .field select:focus, .field textarea:focus{ outline:2px solid var(--honey); outline-offset:1px; }
+  .sheet-actions{ display:flex; gap:10px; margin-top:6px; }
+  .sheet-actions .btn{ flex:1; }
+  .close-x{
+    position:absolute; top:16px; right:18px; background:none; border:none;
+    color:var(--cream-dim); font-size:1.3rem; cursor:pointer; line-height:1;
+  }
+  .sheet{ position:relative; }
+  .toast{
+    position:fixed; bottom:96px; left:50%; transform:translateX(-50%);
+    background:var(--honey-bright); color:#241A0A; font-size:0.82rem; font-weight:600;
+    padding:10px 18px; border-radius:var(--radius-pill); z-index:60;
+    opacity:0; pointer-events:none; transition:opacity .25s ease;
+  }
+  .toast.show{ opacity:1; }
+  .loading{ text-align:center; padding:60px 0; color:var(--cream-dim); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar">
+    <svg class="logo-mark" viewBox="0 0 64 64" fill="none">
+      <path d="M14 30 L32 20 L50 30 L50 46 L32 56 L14 46 Z" fill="#B9791F" opacity="0.35"/>
+      <path d="M18 32 L32 24 L46 32 L46 44 L32 52 L18 44 Z" fill="#E3A63E" opacity="0.5"/>
+      <ellipse cx="32" cy="35" rx="10" ry="8" fill="#F4C458"/>
+      <path d="M22 35 h20 M23.5 30 h17 M23.5 40 h17" stroke="#1B140C" stroke-width="1.6"/>
+      <circle cx="32" cy="20" r="4.2" fill="#1B140C"/>
+      <path d="M32 24 C 27 26, 24 32, 25 38 C 26 43, 30 46, 32 46 C 34 46, 38 43, 39 38 C 40 32, 37 26, 32 24 Z" fill="#1B140C"/>
+      <path d="M27 30 h10 M26.5 34 h11 M27 38 h10" stroke="#F4C458" stroke-width="1.4"/>
+      <path d="M25 24 C 20 20, 14 21, 13 25 C 15 29, 21 29, 25 26 Z" fill="#F6EEDD" opacity="0.85"/>
+      <path d="M39 24 C 44 20, 50 21, 51 25 C 49 29, 43 29, 39 26 Z" fill="#F6EEDD" opacity="0.85"/>
+    </svg>
+    <div class="brandblock">
+      <h1>Suivi Rucher</h1>
+      <div class="tagline">300 colonies &middot; gestion professionnelle</div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="loading" id="loading-state">Chargement de vos données…</div>
+  </main>
+
+  <button class="fab" id="fab-add" style="display:none;">+</button>
+
+  <nav class="tabbar">
+    <div class="tabbar-inner">
+      <button class="tab active" data-tab="accueil"><span class="ic">&#8962;</span>Accueil</button>
+      <button class="tab" data-tab="ruchers"><span class="ic">&#9906;</span>Ruchers</button>
+      <button class="tab" data-tab="visites"><span class="ic">&#128269;</span>Visites</button>
+      <button class="tab" data-tab="elevage"><span class="ic">&#128012;</span>Élevage</button>
+      <button class="tab" data-tab="recoltes"><span class="ic">&#127855;</span>Récoltes</button>
+    </div>
+  </nav>
+
+  <div class="sheet-backdrop" id="sheet-backdrop">
+    <div class="sheet" id="sheet-content"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ---------- STORAGE HELPERS ---------- */
+/* Utilise le stockage Claude quand l'app tourne en aperçu Artifact,
+   sinon bascule sur le stockage local du téléphone/navigateur
+   (nécessaire pour l'app une fois publiée seule, hors Claude). */
+const KEY = 'suivi-rucher-data-v1';
+let DATA = { ruchers: [], ruches: [], visites: [], reines: [], essaims: [], recoltes: [] };
+const hasClaudeStorage = (typeof window !== 'undefined' && window.storage && typeof window.storage.get === 'function');
+
+async function loadData(){
+  try{
+    if(hasClaudeStorage){
+      const res = await window.storage.get(KEY);
+      if(res && res.value){ DATA = JSON.parse(res.value); }
+    } else {
+      const raw = localStorage.getItem(KEY);
+      if(raw){ DATA = JSON.parse(raw); }
+    }
+  }catch(e){ /* pas encore de données enregistrées, on garde les valeurs par défaut */ }
+}
+async function saveData(){
+  try{
+    if(hasClaudeStorage){
+      await window.storage.set(KEY, JSON.stringify(DATA));
+    } else {
+      localStorage.setItem(KEY, JSON.stringify(DATA));
+    }
+  }catch(e){
+    console.error('Erreur de sauvegarde', e);
+    showToast("Erreur d'enregistrement — réessaie");
+  }
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+/* ---------- NAV STATE ---------- */
+let currentTab = 'accueil';
+const fabConfig = {
+  ruchers: { label:'+', action: ()=>openSheetNewRucher() },
+  visites: { label:'+', action: ()=>openSheetNewVisite() },
+  elevage: { label:'+', action: ()=>openSheetElevageChoice() },
+  recoltes: { label:'+', action: ()=>openSheetNewRecolte() },
+};
+
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTab = btn.dataset.tab;
+    render();
+  });
+});
+document.getElementById('fab-add').addEventListener('click', ()=>{
+  const cfg = fabConfig[currentTab];
+  if(cfg) cfg.action();
+});
+document.getElementById('sheet-backdrop').addEventListener('click', (e)=>{
+  if(e.target.id === 'sheet-backdrop') closeSheet();
+});
+
+function openSheet(html){
+  document.getElementById('sheet-content').innerHTML =
+    '<button class="close-x" onclick="closeSheet()">&times;</button>' + html;
+  document.getElementById('sheet-backdrop').classList.add('open');
+}
+function closeSheet(){
+  document.getElementById('sheet-backdrop').classList.remove('open');
+}
+
+/* ---------- HELPERS: derived data ---------- */
+function totalRuches(){ return DATA.ruches.filter(r=>r.statut!=='perdue').length; }
+function ruchesForRucher(rid){ return DATA.ruches.filter(r=>r.rucherId===rid); }
+function fmtDate(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'});
+}
+function daysSince(iso){
+  if(!iso) return Infinity;
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+}
+
+/* ---------- RENDER ROOT ---------- */
+function render(){
+  const fab = document.getElementById('fab-add');
+  fab.style.display = fabConfig[currentTab] ? 'flex' : 'none';
+  const main = document.getElementById('main');
+  if(currentTab === 'accueil') main.innerHTML = renderAccueil();
+  else if(currentTab === 'ruchers') main.innerHTML = renderRuchers();
+  else if(currentTab === 'visites') main.innerHTML = renderVisites();
+  else if(currentTab === 'elevage') main.innerHTML = renderElevage();
+  else if(currentTab === 'recoltes') main.innerHTML = renderRecoltes();
+  main.querySelector('.view')?.classList.add('active');
+}
+
+/* ---------- ACCUEIL ---------- */
+function renderAccueil(){
+  const nbRuches = totalRuches();
+  const nbRuchers = DATA.ruchers.length;
+  const anneeCourante = new Date().getFullYear();
+  const kgAnnee = DATA.recoltes.filter(r=> new Date(r.date).getFullYear()===anneeCourante)
+    .reduce((s,r)=>s+Number(r.quantite||0),0);
+  const essaimsEnCours = DATA.essaims.filter(e=>e.statut==='en cours').length;
+
+  // hives not visited in 21+ days -> alert
+  const alerts = [];
+  DATA.ruchers.forEach(ruch=>{
+    const ruches = ruchesForRucher(ruch.id);
+    if(ruches.length===0) return;
+    let lastVisit = null;
+    DATA.visites.filter(v=>v.rucherId===ruch.id).forEach(v=>{
+      if(!lastVisit || new Date(v.date) > new Date(lastVisit)) lastVisit = v.date;
+    });
+    const d = daysSince(lastVisit);
+    if(d > 21){
+      alerts.push({ ok:false, text: `${ruch.nom} : aucune visite depuis ${lastVisit ? d+' jours' : 'sa création'}`, meta: `${ruches.length} ruches concernées` });
+    }
+  });
+  const greffagesRecents = DATA.reines.filter(r=>r.statut==='en cours').length;
+  if(greffagesRecents>0){
+    alerts.push({ ok:true, text:`${greffagesRecents} greffage(s) de reines en cours`, meta:"À suivre pour l'acceptation" });
+  }
+
+  return `<div class="view">
+    <div class="hero-card">
+      <div class="hero-label">Colonies actives</div>
+      <div class="hero-num">${nbRuches}</div>
+      <div class="hero-sub">
+        <div><strong>${nbRuchers}</strong>ruchers</div>
+        <div><strong>${essaimsEnCours}</strong>essaims en cours</div>
+        <div><strong>${kgAnnee.toFixed(0)} kg</strong>miel ${anneeCourante}</div>
+      </div>
+    </div>
+
+    <h3 class="section-title">Alertes &amp; suivi</h3>
+    ${alerts.length ? alerts.map(a=>`
+      <div class="alert-item ${a.ok?'ok':''}">
+        <span class="dot">${a.ok?'🐝':'⚠️'}</span>
+        <div class="txt">${a.text}<div class="meta">${a.meta}</div></div>
+      </div>
+    `).join('') : `<div class="alert-item ok"><span class="dot">✓</span><div class="txt">Rien à signaler pour le moment</div></div>`}
+
+    <h3 class="section-title">Aperçu rapide</h3>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="num">${DATA.visites.length}</div><div class="label">Visites enregistrées</div></div>
+      <div class="stat-card"><div class="num">${DATA.reines.length}</div><div class="label">Reines greffées</div></div>
+      <div class="stat-card"><div class="num">${DATA.essaims.length}</div><div class="label">Essaims suivis</div></div>
+      <div class="stat-card"><div class="num">${DATA.recoltes.reduce((s,r)=>s+Number(r.quantite||0),0).toFixed(0)}</div><div class="label">Kg de miel (total)</div></div>
+    </div>
+  </div>`;
+}
+
+/* ---------- RUCHERS ---------- */
+function renderRuchers(){
+  if(DATA.ruchers.length===0){
+    return `<div class="view">
+      <div class="empty">
+        <div class="big-emoji">📍</div>
+        <h3>Aucun rucher enregistré</h3>
+        <p>Ajoute ton premier emplacement de transhumance pour commencer.</p>
+        <button class="btn btn-primary" onclick="openSheetNewRucher()">Ajouter un rucher</button>
+      </div>
+    </div>`;
+  }
+  return `<div class="view">
+    <h3 class="section-title">Tes emplacements (${DATA.ruchers.length})</h3>
+    ${DATA.ruchers.map(r=>{
+      const ruches = ruchesForRucher(r.id);
+      const actives = ruches.filter(x=>x.statut!=='perdue').length;
+      return `<div class="card">
+        <div class="card-top">
+          <div>
+            <div class="card-title">${r.nom}</div>
+            <div class="card-sub">${r.lieu || 'Emplacement non précisé'}</div>
+          </div>
+          <span class="badge">${actives} ruches</span>
+        </div>
+        <div class="card-meta-row">
+          <div class="m">Installé le <b>${fmtDate(r.dateInstallation)}</b></div>
+          ${r.miellee ? `<div class="m">Miellée : <b>${r.miellee}</b></div>` : ''}
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openSheetAddRuchesToRucher('${r.id}')">+ Ruches</button>
+          <button class="btn btn-ghost btn-sm" onclick="openSheetNewVisite('${r.id}')">Visite</button>
+          <button class="btn btn-ghost btn-sm" onclick="deleteRucher('${r.id}')">Supprimer</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function openSheetNewRucher(){
+  openSheet(`
+    <h2>Nouveau rucher</h2>
+    <div class="field"><label>Nom du rucher</label><input id="f-nom" placeholder="Ex : Rucher des Acacias"></div>
+    <div class="field"><label>Lieu / commune</label><input id="f-lieu" placeholder="Ex : Vallée de la Drôme"></div>
+    <div class="field"><label>Miellée visée</label><input id="f-miellee" placeholder="Ex : Acacia, Lavande, Toutes fleurs…"></div>
+    <div class="field"><label>Date d'installation</label><input id="f-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="field"><label>Nombre de ruches installées (optionnel)</label><input id="f-nb" type="number" min="0" placeholder="Ex : 40"></div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" onclick="closeSheet()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveNewRucher()">Enregistrer</button>
+    </div>
+  `);
+}
+async function saveNewRucher(){
+  const nom = document.getElementById('f-nom').value.trim();
+  if(!nom){ showToast('Donne un nom au rucher'); return; }
+  const id = uid();
+  DATA.ruchers.push({
+    id, nom,
+    lieu: document.getElementById('f-lieu').value.trim(),
+    miellee: document.getElementById('f-miellee').value.trim(),
+    dateInstallation: document.getElementById('f-date').value || new Date().toISOString().slice(0,10),
+  });
+  const nb = parseInt(document.getElementById('f-nb').value || '0', 10);
+  for(let i=0;i<nb;i++){
+    DATA.ruches.push({ id: uid(), rucherId: id, numero: i+1, statut:'active', dateCreation: new Date().toISOString().slice(0,10) });
+  }
+  await saveData();
+  closeSheet(); showToast('Rucher ajouté'); render();
+}
+
+function openSheetAddRuchesToRucher(rucherId){
+  const r = DATA.ruchers.find(x=>x.id===rucherId);
+  openSheet(`
+    <h2>Ajouter des ruches</h2>
+    <p style="color:var(--cream-dim); font-size:0.82rem; margin-top:-8px;">${r.nom}</p>
+    <div class="field"><label>Nombre de ruches à ajouter</label><input id="f-nb" type="number" min="1" value="1"></div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" onclick="closeSheet()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveAddRuches('${rucherId}')">Ajouter</button>
+    </div>
+  `);
+}
+async function saveAddRuches(rucherId){
+  const nb = parseInt(document.getElementById('f-nb').value || '0', 10);
+  const existing = ruchesForRucher(rucherId).length;
+  for(let i=0;i<nb;i++){
+    DATA.ruches.push({ id: uid(), rucherId, numero: existing+i+1, statut:'active', dateCreation: new Date().toISOString().slice(0,10) });
+  }
+  await saveData();
+  closeSheet(); showToast(`${nb} ruche(s) ajoutée(s)`); render();
+}
+async function deleteRucher(id){
+  if(!confirm('Supprimer ce rucher et toutes ses ruches ?')) return;
+  DATA.ruchers = DATA.ruchers.filter(r=>r.id!==id);
+  DATA.ruches = DATA.ruches.filter(r=>r.rucherId!==id);
+  await saveData(); showToast('Rucher supprimé'); render();
+}
+
+/* ---------- VISITES ---------- */
+function renderVisites(){
+  const sorted = [...DATA.visites].sort((a,b)=> new Date(b.date)-new Date(a.date));
+  if(sorted.length===0){
+    return `<div class="view">
+      <div class="empty">
+        <div class="big-emoji">🔍</div>
+        <h3>Aucune visite enregistrée</h3>
+        <p>Note tes visites de colonies pour suivre l'état de chaque rucher.</p>
+        <button class="btn btn-primary" onclick="openSheetNewVisite()">Enregistrer une visite</button>
+      </div>
+    </div>`;
+  }
+  return `<div class="view">
+    <h3 class="section-title">Historique des visites</h3>
+    ${sorted.map(v=>{
+      const r = DATA.ruchers.find(x=>x.id===v.rucherId);
+      return `<div class="card">
+        <div class="card-top">
+          <div>
+            <div class="card-title">${r ? r.nom : 'Rucher supprimé'}</div>
+            <div class="card-sub">${fmtDate(v.date)}</div>
+          </div>
+          <span class="badge ${v.etat==='bon'?'sage':(v.etat==='alerte'?'rust':'')}">${v.etat==='bon'?'Bon état':v.etat==='alerte'?'À surveiller':'Mixte'}</span>
+        </div>
+        ${v.notes ? `<div class="card-meta-row"><div class="m">${v.notes}</div></div>` : ''}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function openSheetNewVisite(preselectRucherId){
+  if(DATA.ruchers.length===0){ showToast("Ajoute d'abord un rucher"); return; }
+  openSheet(`
+    <h2>Nouvelle visite</h2>
+    <div class="field"><label>Rucher</label>
+      <select id="f-rucher">
+        ${DATA.ruchers.map(r=>`<option value="${r.id}" ${r.id===preselectRucherId?'selected':''}>${r.nom}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field"><label>Date</label><input id="f-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="field"><label>État général</label>
+      <select id="f-etat">
+        <option value="bon">Bon état</option>
+        <option value="mixte">Mixte</option>
+        <option value="alerte">À surveiller</option>
+      </select>
+    </div>
+    <div class="field"><label>Notes (population, réserves, sanitaire…)</label><textarea id="f-notes" placeholder="Ex : bonne ponte, varroa faible, 3 hausses posées"></textarea></div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" onclick="closeSheet()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveNewVisite()">Enregistrer</button>
+    </div>
+  `);
+}
+async function saveNewVisite(){
+  DATA.visites.push({
+    id: uid(),
+    rucherId: document.getElementById('f-rucher').value,
+    date: document.getElementById('f-date').value,
+    etat: document.getElementById('f-etat').value,
+    notes: document.getElementById('f-notes').value.trim(),
+  });
+  await saveData(); closeSheet(); showToast('Visite enregistrée'); render();
+}
+
+/* ---------- ELEVAGE (reines + essaims) ---------- */
+function renderElevage(){
+  const reines = [...DATA.reines].sort((a,b)=> new Date(b.date)-new Date(a.date));
+  const essaims = [...DATA.essaims].sort((a,b)=> new Date(b.date)-new Date(a.date));
+  return `<div class="view">
+    <h3 class="section-title">Greffage &amp; reines (${reines.length})</h3>
+    ${reines.length===0 ? `<div class="empty" style="padding:24px 10px;"><p>Aucun greffage enregistré</p></div>` :
+      reines.map(r=>`
+      <div class="card">
+        <div class="card-top">
+          <div>
+            <div class="card-title">Lignée ${r.lignee || '—'}</div>
+            <div class="card-sub">Greffé le ${fmtDate(r.date)}</div>
+          </div>
+          <span class="badge ${r.statut==='acceptee'?'sage':(r.statut==='perdue'?'rust':'')}">${r.statut==='en cours'?'En cours':r.statut==='acceptee'?'Acceptée':'Perdue'}</span>
+        </div>
+        ${r.notes ? `<div class="card-meta-row"><div class="m">${r.notes}</div></div>` : ''}
+      </div>
+    `).join('')}
+
+    <h3 class="section-title">Essaims (${essaims.length})</h3>
+    ${essaims.length===0 ? `<div class="empty" style="padding:24px 10px;"><p>Aucun essaim enregistré</p></div>` :
+      essaims.map(e=>`
+      <div class="card">
+        <div class="card-top">
+          <div>
+            <div class="card-title">${e.origine || 'Essaim'}</div>
+            <div class="card-sub">Capturé/formé le ${fmtDate(e.date)}</div>
+          </div>
+          <span class="badge ${e.statut==='installe'?'sage':''}">${e.statut==='en cours'?'En cours':'Installé'}</span>
+        </div>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+function openSheetElevageChoice(){
+  openSheet(`
+    <h2>Ajouter</h2>
+    <div class="sheet-actions" style="flex-direction:column;">
+      <button class="btn btn-primary btn-block" onclick="openSheetNewReine()">Nouveau greffage / reine</button>
+      <button class="btn btn-ghost btn-block" onclick="openSheetNewEssaim()">Nouvel essaim</button>
+    </div>
+  `);
+}
+function openSheetNewReine(){
+  openSheet(`
+    <h2>Nouveau greffage</h2>
+    <div class="field"><label>Lignée / souche</label><input id="f-lignee" placeholder="Ex : Buckfast, Noire locale…"></div>
+    <div class="field"><label>Date de greffage</label><input id="f-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="field"><label>Statut</label>
+      <select id="f-statut"><option value="en cours">En cours</option><option value="acceptee">Acceptée</option><option value="perdue">Perdue</option></select>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Nb de cupules, ruche d'élevage…"></textarea></div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" onclick="closeSheet()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveNewReine()">Enregistrer</button>
+    </div>
+  `);
+}
+async function saveNewReine(){
+  DATA.reines.push({
+    id: uid(),
+    lignee: document.getElementById('f-lignee').value.trim(),
+    date: document.getElementById('f-date').value,
+    statut: document.getElementById('f-statut').value,
+    notes: document.getElementById('f-notes').value.trim(),
+  });
+  await saveData(); closeSheet(); showToast('Greffage enregistré'); render();
+}
+function openSheetNewEssaim(){
+  openSheet(`
+    <h2>Nouvel essaim</h2>
+    <div class="field"><label>Origine</label><input id="f-origine" placeholder="Ex : Essaimage naturel rucher Acacias"></div>
+    <div class="field"><label>Date</label><input id="f-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="field"><label>Statut</label>
+      <select id="f-statut"><option value="en cours">En cours</option><option value="installe">Installé</option></select>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" onclick="closeSheet()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveNewEssaim()">Enregistrer</button>
+    </div>
+  `);
+}
+async function saveNewEssaim(){
+  DATA.essaims.push({
+    id: uid(),
+    origine: document.getElementById('f-origine').value.trim(),
+    date: document.getElementById('f-date').value,
+    statut: document.getElementById('f-statut').value,
+  });
+  await saveData(); closeSheet(); showToast('Essaim enregistré'); render();
+}
+
+/* ---------- RECOLTES ---------- */
+function renderRecoltes(){
+  const sorted = [...DATA.recoltes].sort((a,b)=> new Date(b.date)-new Date(a.date));
+  const totalKg = DATA.recoltes.reduce((s,r)=>s+Number(r.quantite||0),0);
+  if(sorted.length===0){
+    return `<div class="view">
+      <div class="empty">
+        <div class="big-emoji">🍯</div>
+        <h3>Aucune récolte enregistrée</h3>
+        <p>Note chaque extraction pour suivre ta production par rucher et par miel.</p>
+        <button class="btn btn-primary" onclick="openSheetNewRecolte()">Ajouter une récolte</button>
+      </div>
+    </div>`;
+  }
+  return `<div class="view">
+    <div class="hero-card">
+      <div class="hero-label">Production totale</div>
+      <div class="hero-num">${totalKg.toFixed(0)} kg</div>
+    </div>
+    <h3 class="section-title">Récoltes</h3>
+    ${sorted.map(r=>{
+      const ruch = DATA.ruchers.find(x=>x.id===r.rucherId);
+      return `<div class="card">
+        <div class="card-top">
+          <div>
+            <div class="card-title">${r.type || 'Miel toutes fleurs'}</div>
+            <div class="card-sub">${ruch ? ruch.nom : 'Rucher non précisé'} &middot; ${fmtDate(r.date)}</div>
+          </div>
+          <span class="badge">${Number(r.quantite).toFixed(0)} kg</span>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+function openSheetNewRecolte(){
+  openSheet(`
+    <h2>Nouvelle récolte</h2>
+    <div class="field"><label>Rucher</label>
+      <select id="f-rucher">
+        <option value="">— Non précisé —</option>
+        ${DATA.ruchers.map(r=>`<option value="${r.id}">${r.nom}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field"><label>Type de miel</label><input id="f-type" placeholder="Ex : Acacia, Lavande, Toutes fleurs"></div>
+    <div class="field"><label>Quantité (kg)</label><input id="f-qte" type="number" min="0" step="0.5" placeholder="Ex : 120"></div>
+    <div class="field"><label>Date d'extraction</label><input id="f-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" onclick="closeSheet()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveNewRecolte()">Enregistrer</button>
+    </div>
+  `);
+}
+async function saveNewRecolte(){
+  const qte = document.getElementById('f-qte').value;
+  if(!qte){ showToast('Indique une quantité'); return; }
+  DATA.recoltes.push({
+    id: uid(),
+    rucherId: document.getElementById('f-rucher').value || null,
+    type: document.getElementById('f-type').value.trim(),
+    quantite: qte,
+    date: document.getElementById('f-date').value,
+  });
+  await saveData(); closeSheet(); showToast('Récolte enregistrée'); render();
+}
+
+/* ---------- INIT ---------- */
+(async function init(){
+  await loadData();
+  render();
+})();
+</script>
+</body>
+</html>
